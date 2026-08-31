@@ -217,6 +217,15 @@ pnpm up @a9i5k4/dsh-auto-memory   # 或: npm install @a9i5k4/dsh-auto-memory@lat
 
 可在 GUI（设置 → 自动记忆）中调整，包括界面语言（zh / en）、界面字号与日界。
 
+### v0.1.30 四层记忆法（agent-memory-management 思想融合）
+
+- **项目笔记四层化**：`Current State(唯一权威,覆盖更新)` / `Constraints(只增不改)` / `Lessons(只增不改)` / 日期流水(append-only)，与每日日志(History)组成「现状/底线/教训/历史」完整四层——现状覆盖写、规则与教训只增、过程只追加，方案被推翻时直接覆盖 Current State，不再堆并列方案。
+- **生命周期四动作（增改留痕）**：任何写入先三查裁决——冲突（同一实体取值变化，Node 18→22、阈值 30→60）→ **覆写留痕**（旧值原位标注 `~~旧值~~ [superseded] 已于日期覆写为: 新值;原因`）；同义/近义重复 → **合并去重**（保留最全最新，旧条归档）；不是决策/约束/偏好/教训 → 丢弃；否则 → 追加（带 `[active]` 标记）。裁决由插件自动执行（实体键提取 + Dice 相似度 + 前缀锚）。
+- **状态标记**：`[active]`（当前有效）/ `[superseded]`（已被覆写，保留证据链）；`superseded` 默认保留，删除仅对 active 生效。
+- **定期维护（默认 7 天自动）**：`maintainIntervalDays`（默认 7）每 N 天自动全层整理——语义去重、过时条目软删留痕（`[REMOVE]` 标记者原位划线 `~~…~~ [superseded] 已删除;原因`）、History 蒸馏（`maintainDistillDays` 默认 30 天）；也可手动 `memory_maintain(days=N)`。维护记录在 `~/.dsh/memory/maintain-state.json`（按工作区）。
+- **附带 skill**：`agent-memory-management`（v2 生命周期版）作为包资源随插件发布，经 DSH 官方 `ctx.skills.register()` 注册。
+- **Bug 修复与降噪**：`ctx.get('agent')` → `'agents'`；diag 环境变量门控；外部记忆扫描 60s 节流；心跳写盘降频；mojibake 正则预编译；zstd 首行限 16MB；注入预算 sub 钳制。
+
 ### v0.1.27 基础加固（记忆卫生闸门 — 防外部脏内容污染）
 
 - **三个写入工具接入写闸门**：`memory_log_dev` / `memory_note_dev` / `memory_user_dev` 写入前先过 `sanitizeForWrite`——疑似乱码（GBK 错误编码往返产物）、复读退化（单词/单字循环，标点分隔也识别）、连续重复行（≥3）一律拒绝并回执原因；追加（append）单条上限 8000 字、整篇重写（replace）上限 20 万字；追加时与文件尾部近 60 行做复读去重（日志行的 `- HH:MM` 前缀不影响判定）。
